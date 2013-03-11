@@ -22,11 +22,14 @@ for page in pdf.pages:
 
 for i in range(10):
 	pos = random.randrange(len(text))
-	sample = text[pos:pos+100]
+	length = random.randrange(50, 100)
+	sample = text[pos:pos+length]
 	sample = sample[sample.index(' ')+1:]
 	if sample.find('.') > 0:
 		sample = sample[:sample.index('.')]
 	else:
 		sample = sample[:sample.rindex(' ')]
+
+	# Quality criteria? Try again if sample is shorter than five characters, etc.
 
 	print sample
