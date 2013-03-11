@@ -1,10 +1,18 @@
 #!/usr/bin/python
 
+# TODO:
+# * check out argparse: http://docs.python.org/2.7/library/argparse.html
+# * remove references in square brackets
+# * fix apostrophes and quotation marks
+# * SQLite database
+# * tweeting
+
 import pyPdf
 import random
 import sys
 
 random.seed()
+
 pdf = pyPdf.PdfFileReader(open(sys.argv[1], 'rb'))
 # print len(pdf.pages)
 
@@ -12,12 +20,13 @@ text = ''
 for page in pdf.pages:
 	text += page.extractText()
 
-pos = random.randrange(len(text))
-sample = text[pos:pos+100]
-sample = sample[sample.index(' ')+1:]
-if sample.find('.') > 0:
-	sample = sample[:sample.index('.')]
-else:
-	sample = sample[:sample.rindex(' ')]
+for i in range(10):
+	pos = random.randrange(len(text))
+	sample = text[pos:pos+100]
+	sample = sample[sample.index(' ')+1:]
+	if sample.find('.') > 0:
+		sample = sample[:sample.index('.')]
+	else:
+		sample = sample[:sample.rindex(' ')]
 
-print sample
+	print sample
