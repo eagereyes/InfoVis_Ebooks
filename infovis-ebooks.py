@@ -7,13 +7,13 @@
 # * SQLite database
 # * tweeting
 
-import pyPdf
+from PyPDF2 import PdfFileReader
 import random
 import sys
 
 random.seed()
 
-pdf = pyPdf.PdfFileReader(open(sys.argv[1], 'rb'))
+pdf = PdfFileReader(open(sys.argv[1], 'rb'))
 # print len(pdf.pages)
 
 text = ''
