@@ -5,6 +5,11 @@
 # * remove references in square brackets
 # * tweeting
 
+# DB Schema:
+# CREATE TABLE sources (id STRING PRIMARY KEY, venue STRING, year INTEGER, text BLOB);
+# CREATE INDEX venue on sources (venue);
+# CREATE INDEX year on sources (year);
+
 from PyPDF2 import PdfFileReader
 from zlib import compress, decompress
 import sqlite3
