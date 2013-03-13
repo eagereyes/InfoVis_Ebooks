@@ -6,15 +6,14 @@
 # * tweeting
 
 # DB Schema:
-# CREATE TABLE sources (id STRING PRIMARY KEY, venue STRING, year INTEGER, text BLOB);
+# CREATE TABLE sources (id STRING PRIMARY KEY, venue STRING, year INTEGER, text TEXT);
 # CREATE INDEX venue on sources (venue);
 # CREATE INDEX year on sources (year);
 
 from PyPDF2 import PdfFileReader
-from zlib import compress, decompress
 import sqlite3
 import hashlib
-import random
+from random import seed, randrange
 import sys
 
 def ingestFile(venue, year, fileName, dbConn):
@@ -38,18 +37,25 @@ def ingestFile(venue, year, fileName, dbConn):
 	md5.update(text.encode('ascii', 'ignore'))
 	md5 = md5.hexdigest()
 
-	text = compress(text.encode('ascii', 'xmlcharrefreplace'), 9)
-
-	dbConn.execute('INSERT OR REPLACE INTO sources VALUES (?, ?, ?, ?)', (md5, venue, year, buffer(text)))
+	dbConn.execute('INSERT OR REPLACE INTO sources VALUES (?, ?, ?, ?)', (md5, venue, year, text))
 	dbConn.commit()
 
 	print 'Stored %s: %d pages, %d characters' % (fileName, numPages, numChars)
 
 
 def sample(dbConn):
+	ids = []
+	for row in dbConn.execute('select id from sources'):
+		ids.append(row[0])
+
+	sourceID = ids[randrange(len(ids))]
+
+	c = dbConn.execute('select text from sources where id = ?', (sourceID,))
+	text = c.fetchone()[0]
+
 	for i in range(10):
-		pos = random.randrange(len(text))
-		length = random.randrange(50, 100)
+		pos = randrange(len(text))
+		length = randrange(50, 100)
 		sample = text[pos:pos+length]
 		sample = sample[sample.index(' ')+1:]
 		if sample.find('.') > 0:
@@ -64,14 +70,14 @@ def sample(dbConn):
 		print sample
 
 
-random.seed()
+seed()
 
 dbConn = sqlite3.connect('ebooks.sqlite')
 
 if sys.argv[1] == 'ingest' and len(sys.argv) == 5:
 	ingestFile(sys.argv[2], sys.argv[3], sys.argv[4], dbConn)
 elif sys.argv[1] == 'sample':
-	sample()
+	sample(dbConn)
 else:
 	print 'Unknown operation'
 
