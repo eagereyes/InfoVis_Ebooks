@@ -34,13 +34,13 @@ def ingestFile(venue, year, fileName, dbConn):
 	text = text.replace(u'Ó', '\'')
 	text = text.replace(u'Ò', '\'')
 
-#	text = compress(text.encode('ascii', 'xmlcharrefreplace'))
-
 	md5 = hashlib.md5()
 	md5.update(text.encode('ascii', 'ignore'))
 	md5 = md5.hexdigest()
 
-	dbConn.execute('INSERT INTO sources VALUES (?, ?, ?, ?)', (md5, venue, year, text))
+	text = compress(text.encode('ascii', 'xmlcharrefreplace'), 9)
+
+	dbConn.execute('INSERT OR REPLACE INTO sources VALUES (?, ?, ?, ?)', (md5, venue, year, buffer(text)))
 	dbConn.commit()
 
 	print 'Stored %s: %d pages, %d characters' % (fileName, numPages, numChars)
