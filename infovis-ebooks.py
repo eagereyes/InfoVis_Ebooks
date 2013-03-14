@@ -72,9 +72,9 @@ def sample(dbConn):
 		else:
 			sample = sample[:sample.rindex(' ')]
 
-		# Quality criteria? Try again if sample is shorter than five characters, etc.
-
 		sample = sample.strip()
+
+		# Quality criteria? Try again if sample is shorter than five characters, etc.
 
 		print sample
 
@@ -87,6 +87,9 @@ if sys.argv[1] == 'ingest' and len(sys.argv) == 5:
 	ingestFile(sys.argv[2], sys.argv[3], sys.argv[4], dbConn)
 elif sys.argv[1] == 'sample':
 	sample(dbConn)
+elif sys.argv[1] == 'rescan':
+	# rescan files and populate DB
+	pass
 else:
 	print 'Unknown operation'
 
