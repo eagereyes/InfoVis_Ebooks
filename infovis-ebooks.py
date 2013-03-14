@@ -6,15 +6,18 @@
 # * tweeting
 
 # DB Schema:
-# CREATE TABLE sources (id STRING PRIMARY KEY, venue STRING, year INTEGER, text TEXT);
+# CREATE TABLE sources (id STRING PRIMARY KEY, venue STRING, year INTEGER, fileName STRING);
 # CREATE INDEX venue on sources (venue);
 # CREATE INDEX year on sources (year);
 
 from PyPDF2 import PdfFileReader
 import sqlite3
 import hashlib
+import gzip
 from random import seed, randrange
 import sys
+
+PATH = 'sources/'
 
 def ingestFile(venue, year, fileName, dbConn):
 	pdf = PdfFileReader(open(fileName, 'rb'))
@@ -37,21 +40,27 @@ def ingestFile(venue, year, fileName, dbConn):
 	md5.update(text.encode('ascii', 'ignore'))
 	md5 = md5.hexdigest()
 
-	dbConn.execute('INSERT OR REPLACE INTO sources VALUES (?, ?, ?, ?)', (md5, venue, year, text))
+	outFileName = '%s-%s-%s.txt.gz' % (venue, year, md5)
+	txtFile = gzip.open(PATH + outFileName, 'wb')
+	txtFile.write(text.encode('utf-8', 'ignore'))
+	txtFile.close()
+
+	dbConn.execute('INSERT OR REPLACE INTO sources VALUES (?, ?, ?, ?)', (md5, venue, year, outFileName))
 	dbConn.commit()
 
 	print 'Stored %s: %d pages, %d characters' % (fileName, numPages, numChars)
 
 
 def sample(dbConn):
-	ids = []
-	for row in dbConn.execute('select id from sources'):
-		ids.append(row[0])
+	sources = []
+	for row in dbConn.execute('select id, fileName from sources'):
+		sources.append({'id': row[0], 'fileName': row[1]})
 
-	sourceID = ids[randrange(len(ids))]
+	source = sources[randrange(len(sources))]
 
-	c = dbConn.execute('select text from sources where id = ?', (sourceID,))
-	text = c.fetchone()[0]
+	txtFile = gzip.open(PATH + source['fileName'])
+	text = txtFile.read()
+	txtFile.close()
 
 	for i in range(10):
 		pos = randrange(len(text))
