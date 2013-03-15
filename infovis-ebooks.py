@@ -19,36 +19,38 @@ import sys
 
 PATH = 'sources/'
 
-def ingestFile(venue, year, fileName, dbConn):
-	pdf = PdfFileReader(open(fileName, 'rb'))
-	# print len(pdf.pages)
+def ingestFile(venue, year, fileNames, dbConn):
+	for fileName in fileNames:
 
-	text = ''
-	numPages = 0
-	for page in pdf.pages:
-		numPages += 1
-		text += ' '+page.extractText()
+		pdf = PdfFileReader(open(fileName, 'rb'))
+		# print len(pdf.pages)
 
-	numChars = len(text)
+		text = ''
+		numPages = 0
+		for page in pdf.pages:
+			numPages += 1
+			text += ' '+page.extractText()
 
-	text = text.replace(u'Ô', '\'')
-	text = text.replace(u'Õ', '\'')
-	text = text.replace(u'Ó', '\'')
-	text = text.replace(u'Ò', '\'')
+		numChars = len(text)
 
-	md5 = hashlib.md5()
-	md5.update(text.encode('ascii', 'ignore'))
-	md5 = md5.hexdigest()
+		text = text.replace(u'Ô', '\'')
+		text = text.replace(u'Õ', '\'')
+		text = text.replace(u'Ó', '\'')
+		text = text.replace(u'Ò', '\'')
 
-	outFileName = '%s-%s-%s.txt.gz' % (venue, year, md5)
-	txtFile = gzip.open(PATH + outFileName, 'wb')
-	txtFile.write(text.encode('utf-8', 'ignore'))
-	txtFile.close()
+		md5 = hashlib.md5()
+		md5.update(text.encode('ascii', 'ignore'))
+		md5 = md5.hexdigest()
 
-	dbConn.execute('INSERT OR REPLACE INTO sources VALUES (?, ?, ?, ?)', (md5, venue, year, outFileName))
-	dbConn.commit()
+		outFileName = '%s-%s-%s.txt.gz' % (venue, year, md5)
+		txtFile = gzip.open(PATH + outFileName, 'wb')
+		txtFile.write(text.encode('utf-8', 'ignore'))
+		txtFile.close()
 
-	print 'Stored %s: %d pages, %d characters' % (fileName, numPages, numChars)
+		dbConn.execute('INSERT OR REPLACE INTO sources VALUES (?, ?, ?, ?)', (md5, venue, year, outFileName))
+		dbConn.commit()
+
+		print 'Stored %s: %d pages, %d characters' % (fileName, numPages, numChars)
 
 
 def sample(dbConn):
@@ -61,6 +63,8 @@ def sample(dbConn):
 	txtFile = gzip.open(PATH + source['fileName'])
 	text = txtFile.read()
 	txtFile.close()
+
+	print text
 
 	for i in range(10):
 		pos = randrange(len(text))
@@ -83,8 +87,8 @@ seed()
 
 dbConn = sqlite3.connect('ebooks.sqlite')
 
-if sys.argv[1] == 'ingest' and len(sys.argv) == 5:
-	ingestFile(sys.argv[2], sys.argv[3], sys.argv[4], dbConn)
+if sys.argv[1] == 'ingest' and len(sys.argv) >= 5:
+	ingestFile(sys.argv[2], sys.argv[3], sys.argv[4:], dbConn)
 elif sys.argv[1] == 'sample':
 	sample(dbConn)
 elif sys.argv[1] == 'rescan':
