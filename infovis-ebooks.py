@@ -14,6 +14,9 @@ import sqlite3
 import hashlib
 import gzip
 from random import seed, randrange
+from twython import Twython
+import json
+
 import sys
 
 PATH = 'sources/'
@@ -58,22 +61,36 @@ def sample(dbConn):
 
 #	print text
 
-	for i in range(10):
-		pos = randrange(len(text))
-		length = randrange(50, 100)
-		sample = text[pos:pos+length]
-		sample = sample[sample.index(' ')+1:]
-		if sample.find('.') > 0:
-			sample = sample[:sample.index('.')]
-		else:
-			sample = sample[:sample.rindex(' ')]
+	pos = randrange(len(text))
+	length = randrange(50, 100)
+	sample = text[pos:pos+length]
+	sample = sample[sample.index(' ')+1:]
+	if sample.find('.') > 0:
+		sample = sample[:sample.index('.')]
+	else:
+		sample = sample[:sample.rindex(' ')]
 
-		sample = sample.strip()
+	sample = sample.strip()
 
-		# Quality criteria? Try again if sample is shorter than five characters, etc.
+	# Quality criteria? Try again if sample is shorter than five characters, etc.
 
-		print sample, '-', source['origin']
+	return '%s - %s' % (sample, source['origin'])
 
+def tweet(dbConn):
+	text = sample(dbConn)
+
+	twitterAppData = json.load(open('twitter.json'))
+	twitter = Twython(app_key = twitterAppData['app_key'],
+            app_secret = twitterAppData['app_secret'],
+            oauth_token = twitterAppData['oauth_token'],
+            oauth_token_secret = twitterAppData['oauth_token_secret'])
+
+	twitter.updateStatus(status=text)
+
+
+#
+# Main
+#
 
 seed()
 
@@ -83,10 +100,9 @@ if sys.argv[1] == 'ingest' and len(sys.argv) == 6:
 	# venue, year, origin, fileName
 	ingestFile(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], dbConn)
 elif sys.argv[1] == 'sample':
-	sample(dbConn)
-elif sys.argv[1] == 'rescan':
-	# rescan files and populate DB
-	pass
+	print sample(dbConn)
+elif sys.argv[1] == 'tweet':
+	tweet(dbConn)
 else:
 	print 'Unknown operation'
 
