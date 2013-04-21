@@ -1,10 +1,6 @@
 #!/usr/bin/python
 # coding=utf-8
 
-# TODO:
-# * remove references in square brackets
-# * tweeting
-
 # DB Schema:
 # CREATE TABLE sources (id STRING PRIMARY KEY, venue STRING, year INTEGER, origin STRING, fileName STRING);
 # CREATE INDEX venue on sources (venue);
@@ -15,6 +11,7 @@ import hashlib
 import gzip
 from random import seed, randrange
 from twython import Twython
+from datetime import datetime
 import json
 
 import sys
@@ -59,22 +56,24 @@ def sample(dbConn):
 	text = txtFile.read()
 	txtFile.close()
 
-#	print text
+	acceptable = False
 
-	pos = randrange(len(text))
-	length = randrange(50, 100)
-	sample = text[pos:pos+length]
-	sample = sample[sample.index(' ')+1:]
-	if sample.find('.') > 0:
-		sample = sample[:sample.index('.')]
-	else:
-		sample = sample[:sample.rindex(' ')]
+	while acceptable == False:
 
-	sample = sample.strip()
+		pos = randrange(len(text))
+		length = randrange(50, 100)
+		sample = text[pos:pos+length]
+		sample = sample[sample.index(' ')+1:]
+		if sample.find('.') > 0:
+			sample = sample[:sample.index('.')]
+		else:
+			sample = sample[:sample.rindex(' ')]
 
-	# Quality criteria? Try again if sample is shorter than five characters, etc.
+		sample = sample.strip()
 
-	return '%s - %s' % (sample, source['origin'])
+		acceptable = len(sample) > 10 and sample.count(' ') > 3 and sample.count('(') == sample.count(')')
+
+	return u'%s - %s' % (sample, source['origin'])
 
 def tweet(dbConn):
 	text = sample(dbConn)
@@ -85,8 +84,14 @@ def tweet(dbConn):
             oauth_token = twitterAppData['oauth_token'],
             oauth_token_secret = twitterAppData['oauth_token_secret'])
 
+	print 'Tweet at %s:%s' % (datetime.now().strftime('%Y-%m-%d %H:%M:%S'), text)
 	twitter.updateStatus(status=text)
 
+# Tweet with a probability of 1-in-<probability>
+def tweet_maybe(dbConn, probability):
+	n = randrange(probability)
+	if n < 1:
+		tweet(dbConn)
 
 #
 # Main
@@ -103,6 +108,8 @@ elif sys.argv[1] == 'sample':
 	print sample(dbConn)
 elif sys.argv[1] == 'tweet':
 	tweet(dbConn)
+elif sys.argv[1] == 'tweet-maybe':
+	tweet_maybe(dbConn, int(sys.argv[2]))
 else:
 	print 'Unknown operation'
 
