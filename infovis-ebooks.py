@@ -84,7 +84,7 @@ def tweet(dbConn):
             oauth_token = twitterAppData['oauth_token'],
             oauth_token_secret = twitterAppData['oauth_token_secret'])
 
-	print 'Tweet at %s:%s' % (datetime.now().strftime('%Y-%m-%d %H:%M:%S'), text)
+	print 'Tweet at %s\t%s' % (datetime.now().strftime('%Y-%m-%d %H:%M:%S'), text)
 	twitter.updateStatus(status=text)
 
 # Tweet with a probability of 1-in-<probability>
